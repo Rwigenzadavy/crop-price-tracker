@@ -89,6 +89,14 @@ npm test
 - Work is planned on our GitHub Projects board with issues, labels and a milestone.
 - Secrets live in `.env`, which is git-ignored.
 
+## project board link 
+
+https://github.com/users/Rwigenzadavy/projects/2
+
+## participation sheet link 
+
+https://docs.google.com/spreadsheets/d/1bJmq6NWILzwbUYpkZb89TcRqOLvIbtMJfOOpsWrCwaQ/edit?gid=0#gid=0
+
 ## Roadmap
 
 - Admin login and roles (admin adds prices by province)
