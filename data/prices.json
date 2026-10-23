@@ -1,0 +1,17 @@
+[
+  { "crop": "Maize", "market": "Kigali", "price": 450, "unit": "kg" },
+  { "crop": "Maize", "market": "Musanze", "price": 400, "unit": "kg" },
+  { "crop": "Maize", "market": "Huye", "price": 420, "unit": "kg" },
+  { "crop": "Beans", "market": "Kigali", "price": 900, "unit": "kg" },
+  { "crop": "Beans", "market": "Musanze", "price": 850, "unit": "kg" },
+  { "crop": "Beans", "market": "Huye", "price": 870, "unit": "kg" },
+  { "crop": "Rice", "market": "Kigali", "price": 1100, "unit": "kg" },
+  { "crop": "Rice", "market": "Musanze", "price": 1150, "unit": "kg" },
+  { "crop": "Rice", "market": "Huye", "price": 1050, "unit": "kg" },
+  { "crop": "Potatoes", "market": "Kigali", "price": 350, "unit": "kg" },
+  { "crop": "Potatoes", "market": "Musanze", "price": 280, "unit": "kg" },
+  { "crop": "Potatoes", "market": "Huye", "price": 320, "unit": "kg" },
+  { "crop": "Cassava", "market": "Kigali", "price": 300, "unit": "kg" },
+  { "crop": "Cassava", "market": "Musanze", "price": 330, "unit": "kg" },
+  { "crop": "Cassava", "market": "Huye", "price": 270, "unit": "kg" }
+]
