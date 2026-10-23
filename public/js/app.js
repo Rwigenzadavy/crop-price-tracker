@@ -1,4 +1,3 @@
-
 const API_URL = "/api/prices";
 
 const elements = {
@@ -7,6 +6,7 @@ const elements = {
   search: document.getElementById("searchButton"),
   reset: document.getElementById("resetButton"),
   status: document.getElementById("statusMessage"),
+  error: document.getElementById("errorMessage"),
   currentPrice: document.getElementById("currentPrice"),
   currentCrop: document.getElementById("currentCrop"),
   cropCount: document.getElementById("cropCount"),
@@ -14,7 +14,8 @@ const elements = {
   averagePrice: document.getElementById("averagePrice"),
   priceList: document.getElementById("priceList"),
   table: document.getElementById("priceTableBody"),
-  recordCount: document.getElementById("recordCount")
+  recordCount: document.getElementById("recordCount"),
+  chart: document.getElementById("priceChart")
 };
 
 let allPrices = [];
@@ -26,38 +27,61 @@ function getFirst(record, keys) {
       return record[key];
     }
   }
+
   return "";
 }
 
 function cropName(record) {
-  return String(getFirst(record, [
-    "crop", "cropName", "crop_name", "name"
-  ]) || "Unknown crop");
+  return String(
+    getFirst(record, ["crop", "cropName", "crop_name", "name"]) ||
+    "Unknown crop"
+  );
 }
 
 function priceValue(record) {
-  const value = Number(getFirst(record, [
-    "price", "price_per_kg", "pricePerKg", "market_price", "amount"
-  ]));
+  const value = Number(
+    getFirst(record, [
+      "price",
+      "price_per_kg",
+      "pricePerKg",
+      "market_price",
+      "amount"
+    ])
+  );
 
   return Number.isFinite(value) && value > 0 ? value : null;
 }
 
 function provinceName(record) {
-  return String(getFirst(record, [
-    "province", "provinceName", "province_name", "region"
-  ]) || "");
+  return String(
+    getFirst(record, [
+      "province",
+      "provinceName",
+      "province_name",
+      "region"
+    ]) || ""
+  );
 }
 
 function marketName(record) {
-  return String(getFirst(record, [
-    "market", "marketName", "market_name", "district", "location"
-  ]) || "Unknown market");
+  return String(
+    getFirst(record, [
+      "market",
+      "marketName",
+      "market_name",
+      "district",
+      "location"
+    ]) || "Unknown market"
+  );
 }
 
 function recordDate(record) {
   return getFirst(record, [
-    "date", "recorded_at", "recordedAt", "created_at", "createdAt"
+    "date",
+    "recorded_at",
+    "recordedAt",
+    "created_at",
+    "createdAt"
   ]);
 }
 
@@ -70,16 +94,27 @@ function formatRWF(value) {
 }
 
 function setStatus(message, isError = false) {
-  elements.status.textContent = message;
-  elements.status.classList.toggle("error", isError);
+  if (elements.status) {
+    elements.status.textContent = message;
+    elements.status.classList.toggle("error", isError);
+  }
+
+  if (elements.error) {
+    elements.error.hidden = !isError;
+    elements.error.textContent = isError ? message : "";
+  }
 }
 
 function extractRecords(payload) {
-  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload)) {
+    return payload;
+  }
 
   if (payload && typeof payload === "object") {
     for (const key of ["prices", "data", "results", "records"]) {
-      if (Array.isArray(payload[key])) return payload[key];
+      if (Array.isArray(payload[key])) {
+        return payload[key];
+      }
     }
   }
 
@@ -87,7 +122,10 @@ function extractRecords(payload) {
 }
 
 function populateCropOptions(records) {
+  if (!elements.crop) return;
+
   const previousValue = elements.crop.value;
+
   const crops = [...new Set(records.map(cropName))]
     .filter(name => name !== "Unknown crop")
     .sort();
@@ -104,68 +142,97 @@ function populateCropOptions(records) {
 }
 
 function getFilteredPrices() {
-  const selectedCrop = elements.crop.value;
-  const selectedProvince = elements.province.value.toLowerCase();
+  const selectedCrop = elements.crop?.value || "";
+  const selectedLocation = (elements.province?.value || "")
+    .trim()
+    .toLowerCase();
 
   return allPrices.filter(record => {
     const matchesCrop =
       !selectedCrop || cropName(record) === selectedCrop;
 
-    const matchesProvince =
-      !selectedProvince ||
-      provinceName(record).toLowerCase().includes(selectedProvince);
+    const province = provinceName(record).toLowerCase();
+    const market = marketName(record).toLowerCase();
 
-    return matchesCrop && matchesProvince;
+    const matchesLocation =
+      !selectedLocation ||
+      province.includes(selectedLocation) ||
+      market.includes(selectedLocation);
+
+    return matchesCrop && matchesLocation;
   });
 }
 
 function renderStats(records) {
-  const validPrices = records
-    .map(priceValue)
-    .filter(value => value !== null);
+  const validRecords = records.filter(
+    record => priceValue(record) !== null
+  );
 
+  const validPrices = validRecords.map(priceValue);
   const crops = new Set(records.map(cropName));
   const markets = new Set(records.map(marketName));
 
-  elements.cropCount.textContent = crops.has("Unknown crop")
-    ? crops.size - 1
-    : crops.size;
+  if (elements.cropCount) {
+    elements.cropCount.textContent = crops.has("Unknown crop")
+      ? crops.size - 1
+      : crops.size;
+  }
 
-  elements.marketCount.textContent = markets.size;
+  if (elements.marketCount) {
+    elements.marketCount.textContent = markets.size;
+  }
 
-  if (validPrices.length) {
+  if (validPrices.length > 0) {
     const average =
       validPrices.reduce((sum, price) => sum + price, 0) /
       validPrices.length;
 
-    elements.averagePrice.textContent = formatRWF(average);
+    if (elements.averagePrice) {
+      elements.averagePrice.textContent = formatRWF(average);
+    }
 
-    const latest = records.find(record => priceValue(record) !== null);
+    if (elements.currentPrice) {
+      elements.currentPrice.textContent = formatRWF(
+        validPrices[0]
+      );
+    }
 
-    elements.currentPrice.textContent = formatRWF(priceValue(latest));
-    elements.currentCrop.textContent =
-      `${cropName(latest)} · ${marketName(latest)}`;
+    if (elements.currentCrop) {
+      elements.currentCrop.textContent =
+        `${cropName(validRecords[0])} · ${marketName(validRecords[0])}`;
+    }
   } else {
-    elements.averagePrice.textContent = "—";
-    elements.currentPrice.textContent = "—";
-    elements.currentCrop.textContent = "No valid price records";
+    if (elements.averagePrice) {
+      elements.averagePrice.textContent = "—";
+    }
+
+    if (elements.currentPrice) {
+      elements.currentPrice.textContent = "—";
+    }
+
+    if (elements.currentCrop) {
+      elements.currentCrop.textContent = "No valid price records";
+    }
   }
 }
 
 function renderPriceList(records) {
+  if (!elements.priceList) return;
+
   elements.priceList.replaceChildren();
 
   const sorted = [...records]
     .filter(record => priceValue(record) !== null)
     .sort((a, b) => {
-      const dateA = new Date(recordDate(a)).getTime() || 0;
-      const dateB = new Date(recordDate(b)).getTime() || 0;
+      const dateA = Date.parse(recordDate(a)) || 0;
+      const dateB = Date.parse(recordDate(b)) || 0;
       return dateB - dateA;
     })
     .slice(0, 6);
 
-  if (!sorted.length) {
-    elements.priceList.textContent = "No prices available for this selection.";
+  if (sorted.length === 0) {
+    elements.priceList.textContent =
+      "No prices available for this selection.";
     return;
   }
 
@@ -180,6 +247,7 @@ function renderPriceList(records) {
 
     name.textContent = cropName(record);
     location.textContent = marketName(record);
+
     price.className = "price-value";
     price.textContent = formatRWF(priceValue(record));
 
@@ -190,21 +258,34 @@ function renderPriceList(records) {
 }
 
 function renderTable(records) {
-  elements.table.replaceChildren();
-  elements.recordCount.textContent =
-    `${records.length} record${records.length === 1 ? "" : "s"}`;
+  if (!elements.table) return;
 
-  if (!records.length) {
+  elements.table.replaceChildren();
+
+  if (elements.recordCount) {
+    elements.recordCount.textContent =
+      `${records.length} record${records.length === 1 ? "" : "s"}`;
+  }
+
+  if (records.length === 0) {
     const row = elements.table.insertRow();
     const cell = row.insertCell();
+
     cell.colSpan = 5;
     cell.className = "empty-state";
     cell.textContent = "No data available. Try another filter.";
+
     return;
   }
 
   records.forEach(record => {
     const row = elements.table.insertRow();
+
+    const date = recordDate(record);
+    const parsedDate = date ? new Date(date) : null;
+
+    const validDate =
+      parsedDate && !Number.isNaN(parsedDate.getTime());
 
     const values = [
       cropName(record),
@@ -213,9 +294,7 @@ function renderTable(records) {
       priceValue(record) !== null
         ? formatRWF(priceValue(record))
         : "—",
-      recordDate(record)
-        ? new Date(recordDate(record)).toLocaleDateString()
-        : "—"
+      validDate ? parsedDate.toLocaleDateString() : "—"
     ];
 
     values.forEach(value => {
@@ -226,6 +305,10 @@ function renderTable(records) {
 }
 
 function renderChart(records) {
+  if (!elements.chart || typeof Chart === "undefined") {
+    return;
+  }
+
   const grouped = new Map();
 
   records.forEach(record => {
@@ -233,25 +316,36 @@ function renderChart(records) {
     if (price === null) return;
 
     const date = recordDate(record);
-    const label = date
-      ? new Date(date).toLocaleDateString()
+    const parsedDate = date ? new Date(date) : null;
+
+    const validDate =
+      parsedDate && !Number.isNaN(parsedDate.getTime());
+
+    const label = validDate
+      ? parsedDate.toLocaleDateString()
       : cropName(record);
 
-    if (!grouped.has(label)) grouped.set(label, []);
+    if (!grouped.has(label)) {
+      grouped.set(label, []);
+    }
+
     grouped.get(label).push(price);
   });
 
   const labels = [...grouped.keys()].slice(-12);
+
   const values = labels.map(label => {
     const prices = grouped.get(label);
-    return prices.reduce((sum, price) => sum + price, 0) / prices.length;
+
+    return prices.reduce((sum, price) => sum + price, 0) /
+      prices.length;
   });
 
-  const canvas = document.getElementById("priceChart");
+  if (priceChart) {
+    priceChart.destroy();
+  }
 
-  if (priceChart) priceChart.destroy();
-
-  priceChart = new Chart(canvas, {
+  priceChart = new Chart(elements.chart, {
     type: "line",
     data: {
       labels,
@@ -271,17 +365,22 @@ function renderChart(records) {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        legend: { display: false }
+        legend: {
+          display: false
+        }
       },
       scales: {
         y: {
           beginAtZero: false,
           ticks: {
-            callback: value => new Intl.NumberFormat("en-RW").format(value)
+            callback: value =>
+              new Intl.NumberFormat("en-RW").format(value)
           }
         },
         x: {
-          grid: { display: false }
+          grid: {
+            display: false
+          }
         }
       }
     }
@@ -296,10 +395,14 @@ function renderDashboard() {
   renderTable(records);
   renderChart(records);
 
-  if (records.length) {
-    setStatus(`Showing ${records.length} matching crop price record(s).`);
+  if (records.length > 0) {
+    setStatus(
+      `Showing ${records.length} matching crop price record(s).`
+    );
   } else {
-    setStatus("No matching prices found. Try another crop or province.");
+    setStatus(
+      "No matching prices found. Try another crop or location."
+    );
   }
 }
 
@@ -308,7 +411,9 @@ async function loadPrices() {
 
   try {
     const response = await fetch(API_URL, {
-      headers: { Accept: "application/json" }
+      headers: {
+        Accept: "application/json"
+      }
     });
 
     if (!response.ok) {
@@ -324,7 +429,15 @@ async function loadPrices() {
     console.error("Unable to load crop prices:", error);
 
     allPrices = [];
-    renderDashboard();
+
+    renderStats([]);
+    renderPriceList([]);
+    renderTable([]);
+
+    if (priceChart) {
+      priceChart.destroy();
+      priceChart = null;
+    }
 
     setStatus(
       "Could not load crop prices. Check the API endpoint and server terminal.",
@@ -333,12 +446,17 @@ async function loadPrices() {
   }
 }
 
-elements.search.addEventListener("click", renderDashboard);
+if (elements.search) {
+  elements.search.addEventListener("click", renderDashboard);
+}
 
-elements.reset.addEventListener("click", () => {
-  elements.crop.value = "";
-  elements.province.value = "";
-  renderDashboard();
-});
+if (elements.reset) {
+  elements.reset.addEventListener("click", () => {
+    if (elements.crop) elements.crop.value = "";
+    if (elements.province) elements.province.value = "";
+
+    renderDashboard();
+  });
+}
 
 loadPrices();
