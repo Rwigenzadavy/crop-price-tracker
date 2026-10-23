@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,9 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Compare crop prices across markets in Rwanda.">
   <title>CropTrack | Crop Price Dashboard</title>
+
   <link rel="stylesheet" href="/css/style.css">
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
   <script src="/js/app.js" defer></script>
 </head>
+
 <body>
   <header class="site-header">
     <div class="brand">
@@ -26,8 +29,10 @@
           Track crop prices and market trends across Rwanda.
         </p>
       </div>
+
       <span class="dashboard-badge">
-        <span class="status-dot"></span> Market dashboard
+        <span class="status-dot"></span>
+        Market dashboard
       </span>
     </section>
 
@@ -35,49 +40,66 @@
       <div class="filter-field">
         <label for="cropFilter">Select crop</label>
         <select id="cropFilter">
-          <option value="all">All crops</option>
+          <option value="">All crops</option>
         </select>
       </div>
 
       <div class="filter-field">
         <label for="provinceFilter">Select province / market</label>
         <select id="provinceFilter">
-          <option value="all">All locations</option>
+          <option value="">All locations</option>
+          <option value="Kigali">Kigali</option>
+          <option value="Musanze">Musanze</option>
+          <option value="Huye">Huye</option>
         </select>
       </div>
 
-      <button id="searchButton" class="button button-primary">
+      <button
+        id="searchButton"
+        class="button button-primary"
+        type="button"
+      >
         Search prices
       </button>
-      <button id="resetButton" class="button button-secondary">
+
+      <button
+        id="resetButton"
+        class="button button-secondary"
+        type="button"
+      >
         Reset
       </button>
     </section>
 
-    <p id="resultsCount" class="results-count" aria-live="polite">
+    <p id="statusMessage" class="results-count" aria-live="polite">
       Loading crop prices...
     </p>
 
-    <div id="errorMessage" class="error-message" role="alert" hidden></div>
+    <div
+      id="errorMessage"
+      class="error-message"
+      role="alert"
+      hidden
+    ></div>
 
     <section class="stats-grid" aria-label="Market statistics">
       <article class="stat-card">
         <p class="stat-label">Current crop price</p>
         <h3 id="currentPrice">—</h3>
-        <p id="currentPriceDetail" class="stat-detail">
+        <p id="currentCrop" class="stat-detail">
           Average of matching records
         </p>
       </article>
 
       <article class="stat-card">
         <p class="stat-label">Crops tracked</p>
-        <h3 id="cropsTracked">—</h3>
+        <h3 id="cropCount">—</h3>
         <p class="stat-detail">Unique crops in results</p>
       </article>
 
       <article class="stat-card">
         <p class="stat-label">Markets covered</p>
-        <h3 id="marketsCovered">—</h3>
+        <h3 id="marketCount">—</h3>
         <p class="stat-detail">Locations in results</p>
       </article>
 
@@ -92,11 +114,25 @@
       <div class="section-heading">
         <div>
           <p class="eyebrow">MARKET COMPARISON</p>
-          <h2>Cheapest market</h2>
+          <h2>Recent crop prices</h2>
         </div>
       </div>
-      <div id="cheapestMarket" class="cheapest-content">
-        Select a crop to compare its prices.
+
+      <div id="priceList" class="price-list">
+        <p>Loading recent prices...</p>
+      </div>
+    </section>
+
+    <section class="content-panel">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">PRICE TRENDS</p>
+          <h2>Market price overview</h2>
+        </div>
+      </div>
+
+      <div class="chart-container">
+        <canvas id="priceChart" aria-label="Crop price chart"></canvas>
       </div>
     </section>
 
@@ -106,6 +142,8 @@
           <p class="eyebrow">PRICE RECORDS</p>
           <h2>Crop prices</h2>
         </div>
+
+        <span id="recordCount">0 records</span>
       </div>
 
       <div class="table-wrapper">
@@ -114,12 +152,13 @@
             <tr>
               <th>Crop</th>
               <th>Market</th>
+              <th>Province</th>
               <th>Price (RWF)</th>
-              <th>Unit</th>
               <th>Date</th>
             </tr>
           </thead>
-          <tbody id="pricesTable">
+
+          <tbody id="priceTableBody">
             <tr>
               <td colspan="5" class="empty-state">
                 Loading prices...
