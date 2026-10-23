@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Compare crop prices across markets in Rwanda.">
+  <title>CropTrack | Crop Price Dashboard</title>
+
+  <link rel="stylesheet" href="/css/style.css">
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
+  <script src="/js/app.js" defer></script>
+</head>
+
+<body>
+  <header class="site-header">
+    <div class="brand">
+      <h1>🌱 CropTrack</h1>
+      <p>Rwanda Crop Price Tracker</p>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="page-heading">
+      <div>
+        <p class="eyebrow">AGRICULTURAL MARKET INTELLIGENCE</p>
+        <h2>Market Overview</h2>
+        <p class="subtitle">
+          Track crop prices and market trends across Rwanda.
+        </p>
+      </div>
+
+      <span class="dashboard-badge">
+        <span class="status-dot"></span>
+        Market dashboard
+      </span>
+    </section>
+
+    <section class="filter-panel" aria-label="Price filters">
+      <div class="filter-field">
+        <label for="cropFilter">Select crop</label>
+        <select id="cropFilter">
+          <option value="">All crops</option>
+        </select>
+      </div>
+
+      <div class="filter-field">
+        <label for="provinceFilter">Select province / market</label>
+        <select id="provinceFilter">
+          <option value="">All locations</option>
+          <option value="Kigali">Kigali</option>
+          <option value="Musanze">Musanze</option>
+          <option value="Huye">Huye</option>
+        </select>
+      </div>
+
+      <button
+        id="searchButton"
+        class="button button-primary"
+        type="button"
+      >
+        Search prices
+      </button>
+
+      <button
+        id="resetButton"
+        class="button button-secondary"
+        type="button"
+      >
+        Reset
+      </button>
+    </section>
+
+    <p id="statusMessage" class="results-count" aria-live="polite">
+      Loading crop prices...
+    </p>
+
+    <div
+      id="errorMessage"
+      class="error-message"
+      role="alert"
+      hidden
+    ></div>
+
+    <section class="stats-grid" aria-label="Market statistics">
+      <article class="stat-card">
+        <p class="stat-label">Current crop price</p>
+        <h3 id="currentPrice">—</h3>
+        <p id="currentCrop" class="stat-detail">
+          Average of matching records
+        </p>
+      </article>
+
+      <article class="stat-card">
+        <p class="stat-label">Crops tracked</p>
+        <h3 id="cropCount">—</h3>
+        <p class="stat-detail">Unique crops in results</p>
+      </article>
+
+      <article class="stat-card">
+        <p class="stat-label">Markets covered</p>
+        <h3 id="marketCount">—</h3>
+        <p class="stat-detail">Locations in results</p>
+      </article>
+
+      <article class="stat-card">
+        <p class="stat-label">Average price</p>
+        <h3 id="averagePrice">—</h3>
+        <p class="stat-detail">Across returned records</p>
+      </article>
+    </section>
+
+    <section class="content-panel">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">MARKET COMPARISON</p>
+          <h2>Recent crop prices</h2>
+        </div>
+      </div>
+
+      <div id="priceList" class="price-list">
+        <p>Loading recent prices...</p>
+      </div>
+    </section>
+
+    <section class="content-panel">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">PRICE TRENDS</p>
+          <h2>Market price overview</h2>
+        </div>
+      </div>
+
+      <div class="chart-container">
+        <canvas id="priceChart" aria-label="Crop price chart"></canvas>
+      </div>
+    </section>
+
+    <section class="content-panel">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">PRICE RECORDS</p>
+          <h2>Crop prices</h2>
+        </div>
+
+        <span id="recordCount">0 records</span>
+      </div>
+
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Crop</th>
+              <th>Market</th>
+              <th>Province</th>
+              <th>Price (RWF)</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+
+          <tbody id="priceTableBody">
+            <tr>
+              <td colspan="5" class="empty-state">
+                Loading prices...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <footer class="site-footer">
+      <p>CropTrack · Know the price before you go to market.</p>
+      <p class="data-note">
+        Prices are sample data and should be verified before making
+        selling decisions.
+      </p>
+    </footer>
+  </main>
+</body>
+</html>
