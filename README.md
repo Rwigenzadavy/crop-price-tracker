@@ -28,11 +28,13 @@ Smallholder farmers in Rwanda often don't know the current market prices for the
 - **Frontend:** HTML, CSS, JavaScript
 - **Data:** JSON file (`data/prices.json`)
 - **Testing:** Jest, Supertest
+- **Tooling:** ESLint, Docker, GitHub Actions (CI)
 
 ## Project Structure
 
 ```
 crop-price-tracker/
+├── .github/workflows/ci.yml  # CI pipeline (lint, test, Docker build)
 ├── data/prices.json          # Sample price data
 ├── public/                   # Frontend (HTML, CSS, JS)
 ├── src/
@@ -41,7 +43,11 @@ crop-price-tracker/
 │   ├── routes/prices.js      # API endpoints
 │   └── services/priceService.js  # Search, filter, cheapest logic
 ├── tests/                    # Unit and API tests
+├── .dockerignore             # Files excluded from the Docker build context
 ├── .env.example              # Example environment variables
+├── Dockerfile                # Container image recipe
+├── docker-compose.yml        # Run the app with one command
+├── eslint.config.mjs         # Linting rules
 └── README.md
 ```
 
@@ -49,8 +55,9 @@ crop-price-tracker/
 
 ### Prerequisites
 
-- [Node.js](https://nodejs.org) 18 or newer
+- [Node.js](https://nodejs.org) 20.19 or newer, 22.13 or newer, or 24 or newer
 - Git
+- [Docker](https://www.docker.com) (optional, for running in a container)
 
 ### Run the app locally
 
@@ -63,12 +70,31 @@ npm start
 
 Open http://localhost:3000 in your browser.
 
-Optionally, copy `.env.example` to `.env` to change the port.
+To use a different port, set the `PORT` environment variable before starting the app. For example, in PowerShell:
+
+```powershell
+$env:PORT=3001
+npm start
+```
+
+### Run with Docker
+
+```bash
+docker compose up
+```
+
+Open http://localhost:3000. To stop: `docker compose down`
 
 ### Run the tests
 
 ```bash
 npm test
+```
+
+### Run the linter
+
+```bash
+npm run lint
 ```
 
 ## API Endpoints
@@ -84,16 +110,17 @@ npm test
 
 ## Team Workflow
 
-- `main` is protected: all changes go through a pull request with 1 approval.
-- Review comments must be resolved and branches up to date before merging.
+- Changes to `main` should go through a pull request and receive 1 approval.
+- Resolve review comments and update branches as required before merging.
+- The CI workflow runs on pushes to branches other than `main` and on pull requests targeting `main`. It runs lint, tests, and a Docker build.
 - Work is planned on our GitHub Projects board with issues, labels and a milestone.
-- Secrets live in `.env`, which is git-ignored.
+- Local environment files such as `.env` are git-ignored; do not commit secrets.
 
-## project board link 
+## Project board link
 
 https://github.com/users/Rwigenzadavy/projects/2
 
-## participation sheet link 
+## Participation sheet link
 
 https://docs.google.com/spreadsheets/d/1bJmq6NWILzwbUYpkZb89TcRqOLvIbtMJfOOpsWrCwaQ/edit?gid=0#gid=0
 
@@ -101,8 +128,6 @@ https://docs.google.com/spreadsheets/d/1bJmq6NWILzwbUYpkZb89TcRqOLvIbtMJfOOpsWrC
 
 - Admin login and roles (admin adds prices by province)
 - Move storage from JSON to SQLite
-- CI with GitHub Actions
-- Docker containerization
 - Cloud deployment
 
 ## Team
@@ -110,9 +135,9 @@ https://docs.google.com/spreadsheets/d/1bJmq6NWILzwbUYpkZb89TcRqOLvIbtMJfOOpsWrC
 | Name | GitHub | Role |
 |---|---|---|
 | Rwigenza Davy | @Rwigenzadavy | Team lead and repo setup |
-| Jurie Isaro | @Isa-julie | Tests and Documentation
+| Julie Isaro | @Isa-julie | Tests and Documentation |
 | Kethia Karangwa | @kkarangwa | Frontend |
-| Ivan Mucyo | @keen-ivan | backend and Services  |
+| Ivan Mucyo | @keen-ivan | backend and Services |
 
 ## License
 
