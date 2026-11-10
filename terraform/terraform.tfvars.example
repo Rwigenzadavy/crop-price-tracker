@@ -1,0 +1,5 @@
+
+location          = "southafricanorth"
+vm_size           = "Standard_B1s"
+ssh_public_keys   = ["ssh-rsa AAAA... teammate1", "ssh-rsa AAAA... teammate2"]
+allowed_ssh_cidrs = ["203.0.113.5/32"]

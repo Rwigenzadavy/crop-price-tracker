@@ -160,3 +160,10 @@ Thumbs.db
 # Local databases (for the SQLite upgrade later)
 *.db
 *.sqlite
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+terraform.tfvars
+tfplan
+*.pem
