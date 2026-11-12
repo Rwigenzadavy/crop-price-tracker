@@ -68,6 +68,7 @@ jobs:
           exit-code: "1"
           severity: HIGH,CRITICAL
           ignore-unfixed: true
+          trivyignores: .trivyignore
 
       # Scan for secrets accidentally committed to the repo
       - name: Secret scan (Gitleaks)
