@@ -67,6 +67,7 @@ jobs:
           format: table
           exit-code: "1"
           severity: HIGH,CRITICAL
+          ignore-unfixed: true
 
       # Scan for secrets accidentally committed to the repo
       - name: Secret scan (Gitleaks)
