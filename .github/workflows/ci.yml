@@ -33,3 +33,81 @@ jobs:
 
       - name: Build Docker image
         run: docker build -t croptrack .
+
+  security-scan:
+    runs-on: ubuntu-latest
+    needs: build-and-test
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Scan npm dependencies for high/critical vulnerabilities
+      - name: Dependency scan (npm audit)
+        run: npm audit --audit-level=high
+
+      # Build image for Trivy to scan
+      - name: Build Docker image for scanning
+        run: docker build -t croptrack:scan .
+
+      # Scan the Docker image for HIGH and CRITICAL vulnerabilities
+      - name: Container scan (Trivy)
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: croptrack:scan
+          format: table
+          exit-code: "1"
+          severity: HIGH,CRITICAL
+
+      # Scan for secrets accidentally committed to the repo
+      - name: Secret scan (Gitleaks)
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  iac-scan:
+    runs-on: ubuntu-latest
+    needs: build-and-test
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Scan Terraform and Ansible files for security misconfigurations
+      - name: IaC scan (Checkov)
+        uses: bridgecrewio/checkov-action@master
+        with:
+          directory: .
+          soft_fail: true
+
+  docker-push:
+    runs-on: ubuntu-latest
+    needs: [build-and-test, security-scan]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Log in to Docker Hub using repo secrets
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # Build and push the image to Docker Hub
+      - name: Build and push image
+        uses: docker/build-push-action@v5
+        with:
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/croptrack:latest
