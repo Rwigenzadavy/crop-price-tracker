@@ -77,18 +77,30 @@ Gitleaks scans the repository for accidentally committed secrets, credentials, A
 
 These tools help identify security issues early in the development process and support continuous security monitoring.
 
+
 ## 5. Security Findings and Remediation
 
-Security scan findings will be documented below as the automated scans are completed.
+The automated security scans identified several infrastructure and container-related security findings. The development team reviewed the findings and implemented remediation measures where applicable.
 
 | Security Tool | Finding | Severity | Recommended Remediation | Status |
 |---|---|---|---|---|
-| Checkov | Pending scan results | TBD | Review and remediate Terraform security misconfigurations | Pending |
-| Trivy | Pending scan results | TBD | Update vulnerable packages and rebuild affected images | Pending |
-| npm audit | Pending scan results | TBD | Update or replace vulnerable dependencies | Pending |
-| Gitleaks | Pending scan results | TBD | Remove exposed secrets and rotate affected credentials | Pending |
+| Checkov | Terraform NSG allowed SSH access from any IP address (`0.0.0.0/0`). | High | Restrict SSH access to approved public IP addresses only. | Accepted - SSH access restricted through NSG rules. |
+| Trivy | 7 vulnerabilities identified in the Alpine base image, involving OpenSSL, musl and zlib. | High | Upgrade the Docker base image from `node:18-alpine` to `node:20-alpine`. | Mitigated - findings reduced from 24 to 7. |
+| Trivy | 22 vulnerabilities identified in internal npm packages bundled with Node.js. | High/Critical | Review vulnerability applicability and exploitability in the deployment context. | Accepted - vulnerabilities assessed as not exploitable in the current context; `.trivyignore` added. |
+| npm audit | No vulnerabilities found in application dependencies. | None | No remediation required. | Clean - no vulnerabilities detected. |
+| Gitleaks | False positives detected in the Trivy cache directory (`.cache/trivy/db`). | None | Configure Gitleaks to exclude the Trivy cache directory. | Fixed - `.gitleaks.toml` added to exclude the cache directory. |
 
-All findings will be reviewed and prioritized according to their severity and potential impact.
+### 5.1 Remediation Summary
+
+The following actions were taken based on the security scan results:
+
+- Restricted SSH access through Azure Network Security Group rules.
+- Upgraded the Docker base image from Node.js 18 Alpine to Node.js 20 Alpine, reducing identified vulnerabilities from 24 to 7.
+- Added `.trivyignore` to account for vulnerabilities assessed as not exploitable in the current deployment context.
+- Confirmed that npm audit reported no vulnerabilities in application dependencies.
+- Added `.gitleaks.toml` to exclude the Trivy cache directory and eliminate false-positive secret detection results.
+
+Security findings were reviewed based on their severity, relevance and potential impact on the CropTrack deployment.
 
 ## 6. Application Security and Verification
 
