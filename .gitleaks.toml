@@ -1,0 +1,8 @@
+title = "CropTrack Gitleaks Config"
+
+[allowlist]
+  description = "Ignore Trivy cache and other non-source files"
+  paths = [
+    '''.cache/''',
+    '''node_modules/''',
+  ]
