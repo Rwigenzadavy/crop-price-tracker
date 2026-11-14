@@ -107,7 +107,7 @@ jobs:
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          username: rwigenza1davy
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       # Build and push the image to Docker Hub
@@ -115,4 +115,4 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/croptrack:latest
+          tags: rwigenza1davy/croptrack:latest
