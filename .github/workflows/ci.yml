@@ -103,6 +103,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Check secrets exist
+        run: |
+          if [ -z "${{ secrets.DOCKERHUB_USERNAME }}" ]; then echo "USERNAME is empty"; else echo "USERNAME is set"; fi
+          if [ -z "${{ secrets.DOCKERHUB_TOKEN }}" ]; then echo "TOKEN is empty"; else echo "TOKEN is set"; fi
+
       # Log in to Docker Hub using repo secrets
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
