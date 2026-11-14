@@ -1,0 +1,10 @@
+
+---
+app_image: rwigenza1davy/croptrack:latest
+
+app_port: 80
+ssh_port: 22
+
+# Add teammate public SSH keys here.
+# Leave empty until their actual public keys are provided.
+teammate_public_keys: []
