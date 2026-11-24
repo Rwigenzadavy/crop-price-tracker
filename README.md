@@ -28,6 +28,14 @@ Smallholder farmers in Rwanda often don't know the current market prices for the
 - **Frontend:** HTML, CSS, JavaScript
 - **Data:** JSON file (`data/prices.json`)
 - **Testing:** Jest, Supertest
+- **Docker**, Docker Hub
+- **Terraform** (Azure infrastructure)
+- **Ansible** (configuration management)
+- **GitHub Actions** (CI/CD)
+
+## Live URL
+
+http://4.221.64.130/
 
 ## Project Structure
 
@@ -43,6 +51,14 @@ crop-price-tracker/
 ├── tests/                    # Unit and API tests
 ├── .env.example              # Example environment variables
 └── README.md
+├── Dockerfile
+├── docker-compose.yml
+├── .github/workflows/
+│   ├── ci.yml            # CI pipeline
+│   └── cd.yml            # CD pipeline
+├── terraform/            # Azure infrastructure
+├── ansible/              # Server configuration
+└── CHANGELOG.md          #Document the evolution our your system
 ```
 
 ## Getting Started
@@ -69,6 +85,11 @@ Optionally, copy `.env.example` to `.env` to change the port.
 
 ```bash
 npm test
+```
+
+### Getting Started - add a Docker run option:
+```
+docker run -p 3000:3000 rwigenza1davy/croptrack:latest
 ```
 
 ## API Endpoints
@@ -101,18 +122,15 @@ https://docs.google.com/spreadsheets/d/1bJmq6NWILzwbUYpkZb89TcRqOLvIbtMJfOOpsWrC
 
 - Admin login and roles (admin adds prices by province)
 - Move storage from JSON to SQLite
-- CI with GitHub Actions
-- Docker containerization
-- Cloud deployment
 
 ## Team
 
 | Name | GitHub | Role |
 |---|---|---|
-| Rwigenza Davy | @Rwigenzadavy | Team lead and repo setup |
-| Jurie Isaro | @Isa-julie | Tests and Documentation
-| Kethia Karangwa | @kkarangwa | Frontend |
-| Ivan Mucyo | @keen-ivan | backend and Services  |
+| Rwigenza Davy | @Rwigenzadavy | Team lead and repo setup, CI security scans, CD pipeline |
+| Jurie Isaro | @Isa-julie | Tests and Documentation, Terraform infrastructure |
+| Kethia Karangwa | @kkarangwa | Frontend, SECURITY.md |
+| Ivan Mucyo | @keen-ivan | backend and Services, Ansible deployment  |
 
 ## License
 
