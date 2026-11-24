@@ -1,10 +1,10 @@
-
 ---
 app_image: rwigenza1davy/croptrack:latest
 
 app_port: 80
 ssh_port: 22
 
-# Add teammate public SSH keys here.
-# Leave empty until their actual public keys are provided.
-teammate_public_keys: []
+# Teammate public SSH keys
+teammate_public_keys:
+  - "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJ1NDKmFz7+x3X7AtTSU4PAxjiHZMmqBLaKAhffIEA3T Davy"
+  - "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCt/wkIutfVa2AvbEIl98TobUA/xVCQM1U5oFta8EAClD/0qmm4YXOrdFCBbUlDHJdK5R3VgtUIrmE3aWSt2sRdDYFhr7AtAChRC27Uu1Bu3knV0VH6BsBwdifqxuRWb3HnzHFwtOZTOKLawhjtpA1OuZO+ibRXRKcH35Tf1Nrkwm/7ZFUNvX8Pb3TiTF9F6OTmScS13uIuk75O5pDXr0/KzL+EsLeXft2iy1xSPRjI89TQ9QkikUsiKIUGfGTLzMxZJ+ChBY/A7myW+3bri4FI2JtvCptp/R4faDqsH7+iLdeiQGYmYLCytdnxy372xIgRnmNAQB0fhFjpxL1hwobQR0vqQQuItuFAReyB1SDEOZU8vDJE5BhMEfgQyDJSnq0Ze3QBgfGOB9VaE0BfbLSXl393f6sbLMvywox+TyCJxKkYxfqINWNxEXOmfUN8T44kajnD1NW4SONC6FrY5ApL6kpa5M0oCZHSLy21hiT97RjVAGqH05LIOray2N/smtD4Wv0DCo3IAixJMUdSAkG59Rdb2BvDtwVN/4R7gDW6JYzFFD3r40WeTIsl98gdgZGGe5KHvDyAODLPjiqam0VdN9VQRk0E33O9nOc8Rjl+iiXNyke5BB8+TyLWHOp/NXsM1CBizoJhvSg+YHpYPGFD3s7mWQFfAwuJHzxXJuH0HQ== keen@DESKTOP-F50ONIN"
