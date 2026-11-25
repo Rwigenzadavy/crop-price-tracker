@@ -121,3 +121,13 @@ resource "azurerm_linux_virtual_machine" "vm" {
     version   = "latest"
   }
 }
+
+module "database" {
+  source = "./modules/database"
+
+  name_prefix         = local.name
+  location            = azurerm_resource_group.rg.location
+  resource_group_name = azurerm_resource_group.rg.name
+  vnet_name           = azurerm_virtual_network.vnet.name
+  vnet_id             = azurerm_virtual_network.vnet.id
+}
