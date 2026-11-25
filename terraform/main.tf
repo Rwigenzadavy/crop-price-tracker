@@ -132,3 +132,12 @@ module "database" {
   vnet_id             = azurerm_virtual_network.vnet.id
   sku_name            = var.db_sku_name
 }
+
+
+module "registry" {
+  source = "./modules/registry"
+
+  name_prefix         = local.name
+  location            = azurerm_resource_group.rg.location
+  resource_group_name = azurerm_resource_group.rg.name
+}

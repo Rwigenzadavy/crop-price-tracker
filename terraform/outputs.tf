@@ -34,3 +34,17 @@ output "db_admin_password" {
   value     = module.database.admin_password
   sensitive = true
 }
+
+
+output "acr_login_server" {
+  value = module.registry.login_server
+}
+
+output "acr_admin_username" {
+  value = module.registry.admin_username
+}
+
+output "acr_admin_password" {
+  value     = module.registry.admin_password
+  sensitive = true
+}

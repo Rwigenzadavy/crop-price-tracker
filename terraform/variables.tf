@@ -54,5 +54,5 @@ variable "subnet_cidr" {
 
 variable "db_sku_name" {
   type    = string
-  default = "B_Standard_B1ms"
+  default = "GP_Standard_D2s_v3"
 }
