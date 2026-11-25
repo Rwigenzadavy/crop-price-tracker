@@ -51,3 +51,8 @@ variable "subnet_cidr" {
   type    = string
   default = "10.0.1.0/24"
 }
+
+variable "db_sku_name" {
+  type    = string
+  default = "B_Standard_B1ms"
+}

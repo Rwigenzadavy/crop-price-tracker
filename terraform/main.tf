@@ -130,4 +130,5 @@ module "database" {
   resource_group_name = azurerm_resource_group.rg.name
   vnet_name           = azurerm_virtual_network.vnet.name
   vnet_id             = azurerm_virtual_network.vnet.id
+  sku_name            = var.db_sku_name
 }
