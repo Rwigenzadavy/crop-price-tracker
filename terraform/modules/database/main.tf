@@ -120,7 +120,8 @@ resource "azurerm_private_dns_zone_virtual_network_link" "db" {
 # 5. POSTGRESQL FLEXIBLE SERVER
 # ==========================================
 resource "azurerm_postgresql_flexible_server" "db" {
-  #checkov:skip=CKV_AZURE_57:Flexible Server uses delegated subnet and private DNS with public network access disabled; this is the selected private networking design.
+  #checkov:skip=CKV_AZURE_136:Geo-redundant backups are not enabled to avoid additional infrastructure cost for this assignment.
+  #checkov:skip=CKV2_AZURE_57:Flexible Server uses delegated subnet and private DNS with public network access disabled; this is the selected private networking design.
   name                          = "psql-${var.name_prefix}-${random_string.suffix.result}"
   resource_group_name           = var.resource_group_name
   location                      = var.location
