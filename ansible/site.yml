@@ -142,7 +142,7 @@
     # 8. VERIFY APPLICATION AND DATABASE
     # ==========================================
 
-    - name: Check CropTrack health endpoint
+    - name: Check CropTrack health endpoint # checkov:skip=CKV2_ANSIBLE_1:Localhost health check uses HTTP because it communicates only within the VM
       ansible.builtin.uri:
         url: "http://127.0.0.1:{{ app_port }}/health"
         method: GET
