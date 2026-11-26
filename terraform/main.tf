@@ -49,21 +49,10 @@ resource "azurerm_network_security_group" "nsg" {
     protocol                   = "Tcp"
     source_port_range          = "*"
     destination_port_range     = "22"
-    source_address_prefix    = "*"
+    source_address_prefixes    = var.allowed_ssh_cidrs
     destination_address_prefix = "*"
   }
 
-  security_rule {
-    name                       = "allow-web"
-    priority                   = 110
-    direction                  = "Inbound"
-    access                     = "Allow"
-    protocol                   = "Tcp"
-    source_port_range          = "*"
-    destination_port_range     = tostring(var.app_port)
-    source_address_prefix      = "*"
-    destination_address_prefix = "*"
-  }
 }
 
 resource "azurerm_subnet_network_security_group_association" "assoc" {
@@ -80,6 +69,7 @@ resource "azurerm_public_ip" "pip" {
 }
 
 resource "azurerm_network_interface" "nic" {
+  #checkov:skip=CKV_AZURE_119:Public IP is intentional because this VM serves as the SSH jumpbox to the private application VM
   name                = "nic-${local.name}"
   location            = azurerm_resource_group.rg.location
   resource_group_name = azurerm_resource_group.rg.name
@@ -99,6 +89,7 @@ resource "azurerm_linux_virtual_machine" "vm" {
   size                            = var.vm_size
   admin_username                  = var.admin_username
   disable_password_authentication = true
+  allow_extension_operations      = false
   network_interface_ids           = [azurerm_network_interface.nic.id]
 
   dynamic "admin_ssh_key" {

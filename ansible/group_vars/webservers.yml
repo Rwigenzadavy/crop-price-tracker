@@ -1,8 +1,15 @@
 ---
-app_image: rwigenza1davy/croptrack:latest
-
-app_port: 80
+acr_login_server: "acrcroptrackdevjnvnq.azurecr.io"
+image_repository: "croptrack"
+app_port: 3000
 ssh_port: 22
+
+db_host: "psql-croptrack-dev-72hum.postgres.database.azure.com"
+db_port: 5432
+db_name: "croptrack"
+db_user: "croptrackadmin"
+
+jumpbox_private_ip: "10.0.1.4"
 
 # Teammate public SSH keys
 teammate_public_keys:

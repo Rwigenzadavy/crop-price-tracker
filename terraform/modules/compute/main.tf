@@ -19,6 +19,7 @@ resource "azurerm_network_security_group" "app" {
   location            = var.location
   resource_group_name = var.resource_group_name
 
+  # Allow SSH from Bastion
   security_rule {
     name                       = "allow-ssh-from-bastion"
     priority                   = 100
@@ -31,6 +32,7 @@ resource "azurerm_network_security_group" "app" {
     destination_address_prefix = "*"
   }
 
+  # Allow application traffic from the Internet
   security_rule {
     name                       = "allow-app-traffic"
     priority                   = 110
@@ -39,7 +41,20 @@ resource "azurerm_network_security_group" "app" {
     protocol                   = "Tcp"
     source_port_range          = "*"
     destination_port_range     = tostring(var.app_container_port)
-    source_address_prefix      = "*"
+    source_address_prefix      = "Internet"
+    destination_address_prefix = "*"
+  }
+
+  # Allow Azure Load Balancer health probes
+  security_rule {
+    name                       = "allow-health-probes"
+    priority                   = 120
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = tostring(var.app_container_port)
+    source_address_prefix      = "AzureLoadBalancer"
     destination_address_prefix = "*"
   }
 }
@@ -68,6 +83,7 @@ resource "azurerm_linux_virtual_machine" "app" {
   size                            = var.vm_size
   admin_username                  = var.admin_username
   disable_password_authentication = true
+  allow_extension_operations      = false
   network_interface_ids           = [azurerm_network_interface.app.id]
 
   dynamic "admin_ssh_key" {

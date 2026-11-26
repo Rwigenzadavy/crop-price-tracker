@@ -1,28 +1,67 @@
-const prices = require('../../data/prices.json');
+const pool = require('../db');
 
-
-// Search by crop name (partial, case-insensitive) and/or filter by market (exact, case-insensitive)
-function getPrices({ crop, market } = {}) {
-  return prices.filter((item) => {
-    const cropMatch = !crop || item.crop.toLowerCase().includes(crop.toLowerCase());
-    const marketMatch = !market || item.market.toLowerCase() === market.toLowerCase();
-    return cropMatch && marketMatch;
-  });
+function formatPrice(row) {
+  return {
+    ...row,
+    price: Number(row.price),
+  };
 }
 
+async function getPrices({ crop, market } = {}) {
+  const conditions = [];
+  const values = [];
 
-// List of unique markets, for the dropdown
-function getMarkets() {
-  return [...new Set(prices.map((item) => item.market))];
+  if (crop) {
+    values.push(`%${crop}%`);
+    conditions.push(`crop ILIKE $${values.length}`);
+  }
+
+  if (market) {
+    values.push(market);
+    conditions.push(`market ILIKE $${values.length}`);
+  }
+
+  const whereClause = conditions.length
+    ? `WHERE ${conditions.join(' AND ')}`
+    : '';
+
+  const result = await pool.query(
+    `SELECT crop, market, price, unit
+     FROM crop_prices
+     ${whereClause}
+     ORDER BY id`,
+    values
+  );
+
+  return result.rows.map(formatPrice);
 }
 
+async function getMarkets() {
+  const result = await pool.query(
+    `SELECT market
+     FROM crop_prices
+     GROUP BY market
+     ORDER BY MIN(id)`
+  );
 
-// The entry with the lowest price for a crop, or null if the crop isn't found
-function getCheapestMarket(crop) {
-  const matches = getPrices({ crop });
-  if (matches.length === 0) return null;
-  return matches.reduce((lowest, item) => (item.price < lowest.price ? item : lowest));
+  return result.rows.map((row) => row.market);
 }
 
+async function getCheapestMarket(crop) {
+  const result = await pool.query(
+    `SELECT crop, market, price, unit
+     FROM crop_prices
+     WHERE crop ILIKE $1
+     ORDER BY price ASC
+     LIMIT 1`,
+    [`%${crop}%`]
+  );
 
-module.exports = { getPrices, getMarkets, getCheapestMarket };
+  return result.rows.length ? formatPrice(result.rows[0]) : null;
+}
+
+module.exports = {
+  getPrices,
+  getMarkets,
+  getCheapestMarket,
+};

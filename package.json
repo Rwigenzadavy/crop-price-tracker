@@ -21,7 +21,8 @@
   },
   "homepage": "https://github.com/Rwigenzadavy/crop-price-tracker#readme",
   "dependencies": {
-    "express": "^5.3.0"
+    "express": "^5.3.0",
+    "pg": "^8.23.1"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
