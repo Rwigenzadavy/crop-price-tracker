@@ -1,54 +1,136 @@
-# Terraform: CropTrack infrastructure on Azure
+# Terraform - CropTrack Azure Infrastructure
 
-Provisions the infrastructure for CropTrack: a resource group, virtual network and subnet,
-a network security group (SSH restricted, HTTP public), a static public IP, and one Ubuntu 22.04 VM.
+## Overview
+
+Terraform provisions the Azure infrastructure used by CropTrack.
+
+The infrastructure includes:
+
+- Resource group and virtual network.
+- Public jumpbox VM.
+- Private application subnet and VM.
+- Network security groups.
+- Azure Load Balancer and public IP.
+- Azure PostgreSQL Flexible Server.
+- Private DNS zone and virtual network link.
+- Azure Container Registry.
 
 ## Prerequisites
-- Terraform >= 1.5
-- Azure CLI (`az login`), or Azure Cloud Shell (already authenticated)
-- An Azure subscription that can create VMs in the chosen region
-- An SSH key pair: `ssh-keygen -t rsa -b 4096 -f ~/.ssh/alu-devops -N ""`
 
-## Variables
-| Name | Description | Default |
-|---|---|---|
-| `project_name` | Name prefix for resources | `croptrack` |
-| `environment` | Environment label | `dev` |
-| `location` | Azure region | `southafricanorth` |
-| `vm_size` | VM size | `Standard_DS1_v2` |
-| `admin_username` | VM admin user | `azureuser` |
-| `ssh_public_keys` | List of SSH public keys allowed on the VM | none (required) |
-| `allowed_ssh_cidrs` | CIDRs allowed to SSH (port 22) | none (required) |
-| `app_port` | Public web port | `80` |
-| `vnet_cidr` / `subnet_cidr` | Network ranges | `10.0.0.0/16` / `10.0.1.0/24` |
+- Terraform 1.5 or newer.
+- Azure CLI.
+- Authenticated Azure subscription.
+- SSH key pair.
+- Required Azure permissions.
 
-## Usage
-```bash
-cd terraform
-cp terraform.tfvars.example terraform.tfvars   # edit with your keys and IPs
-terraform init
-terraform plan -out=tfplan
-terraform apply tfplan
-terraform output
+## Directory Structure
+
+```text
+terraform/
+├── main.tf
+├── app.tf
+├── outputs.tf
+├── variables.tf
+├── modules/
+│   ├── compute/
+│   ├── database/
+│   ├── loadbalancer/
+│   └── registry/
+└── README.md
 ```
+
+## Network Architecture
+
+| Component | Network |
+|---|---|
+| Virtual network | `10.0.0.0/16` |
+| Jumpbox subnet | `10.0.1.0/24` |
+| Application subnet | `10.0.2.0/24` |
+| Database subnet | Configured using `db_subnet_cidr` |
+| Application VM | Private IP, currently configured as `10.0.2.4` |
+
+The application VM is not assigned a public IP. Administration is performed through the jumpbox.
+
+## Terraform Workflow
+
+Initialize the Terraform working directory:
+
+```bash
+terraform -chdir=terraform init
+```
+
+Format Terraform files:
+
+```bash
+terraform -chdir=terraform fmt -recursive
+```
+
+Validate the configuration:
+
+```bash
+terraform -chdir=terraform validate
+```
+
+Review planned infrastructure changes:
+
+```bash
+terraform -chdir=terraform plan
+```
+
+**Important:** Apply and destroy operations must be coordinated with the team member maintaining the shared Terraform state. Do not independently create or destroy shared Azure resources.
 
 ## Outputs
-`public_ip_address`, `vm_id`, `vnet_id`, `resource_group_name`, `ssh_command`.
 
-## Connect
+After infrastructure has been provisioned, useful outputs include:
+
+| Output | Description |
+|---|---|
+| `bastion_ip` | Public IP of the jumpbox |
+| `app_private_ip` | Private IP of the application VM |
+| `lb_public_ip` | Public IP of the Load Balancer |
+| `app_url` | Public application URL |
+| `db_fqdn` | PostgreSQL server hostname |
+| `db_name` | Application database name |
+| `acr_login_server` | Azure Container Registry hostname |
+
+Retrieve outputs:
+
 ```bash
-ssh -i ~/.ssh/alu-devops azureuser@<public_ip_address>
+terraform -chdir=terraform output
 ```
 
-## Destroy
+Retrieve the application URL:
+
 ```bash
-terraform destroy
+terraform -chdir=terraform output app_url
 ```
+
+Sensitive database and registry credentials must never be published in documentation or committed to Git.
+
+## Security
+
+- The application VM is privately addressed.
+- SSH administration uses key-based authentication.
+- Network security groups restrict inbound traffic.
+- PostgreSQL public network access is disabled.
+- PostgreSQL uses delegated subnet and private DNS configuration.
+- Terraform state and secrets must remain outside version control.
+
+## Teardown
+
+Destroying infrastructure is a team-coordinated operation.
+
+Before destroying resources:
+
+1. Confirm the team has approved the operation.
+2. Confirm the correct Terraform state is available.
+3. Check which resources depend on the infrastructure.
+4. Ensure any required demonstration or evidence has been collected.
+
+Run `terraform destroy` only through the agreed state-owning workflow.
 
 ## Notes
-- `terraform.tfvars` and state files are git-ignored. Never commit keys or state.
-- Azure for Students limits regions and VM sizes. If apply fails with `SkuNotAvailable`,
-  change `vm_size` or `location` in `terraform.tfvars`.
-- The provider block sets `resource_provider_registrations = "none"` because automatic
-  registration of every Azure provider stalls on student subscriptions.
-- Changing `ssh_public_keys` replaces the VM. Prefer managing extra keys with Ansible after first deploy.
+
+- Do not commit `terraform.tfvars`, Terraform state files or secret credentials.
+- Use the same shared state when managing existing infrastructure.
+- Avoid enabling additional paid Azure features unless the team has agreed to the cost.

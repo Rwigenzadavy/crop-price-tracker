@@ -2,136 +2,291 @@
 
 > Know the price before you go to market.
 
+CropTrack is a web application that helps smallholder farmers and traders in Rwanda compare crop prices across markets before deciding where to sell or buy.
+
 ## Problem Statement
 
-Smallholder farmers in Rwanda often don't know the current market prices for their crops. They sell at whatever price a buyer offers and can lose income because they can't compare markets. CropTrack lets them check and compare crop prices across markets before they decide where to sell.
+Smallholder farmers in Rwanda often lack reliable information about crop prices in different markets. This makes it difficult to compare offers and choose where to sell their produce.
+
+CropTrack provides a simple dashboard for viewing and comparing crop prices across selected markets.
 
 ## Target Users
 
-- Smallholder farmers deciding where to sell
-- Small traders comparing buying prices
-- Cooperative managers tracking market prices
+- Smallholder farmers deciding where to sell.
+- Small traders comparing buying prices.
+- Cooperative managers tracking market prices.
 
 ## Core Features
 
-1. View prices for 5 crops (Maize, Beans, Rice, Potatoes, Cassava)
-2. Search by crop name
-3. Filter by market (Kigali, Musanze, Huye)
-4. See the cheapest market for a crop
-5. Simple web dashboard
+1. View prices for five crops: maize, beans, rice, potatoes and cassava.
+2. Search prices by crop name.
+3. Filter prices by market: Kigali, Musanze and Huye.
+4. Identify the cheapest market for a crop.
+5. View crop prices through a simple web dashboard.
+6. Check application and database connectivity through a health endpoint.
 
-> Prices are sample data
+**Note:** The current crop prices are sample data.
 
 ## Technology Stack
 
-- **Backend:** Node.js, Express
-- **Frontend:** HTML, CSS, JavaScript
-- **Data:** JSON file (`data/prices.json`)
-- **Testing:** Jest, Supertest
-- **Docker**, Docker Hub
-- **Terraform** (Azure infrastructure)
-- **Ansible** (configuration management)
-- **GitHub Actions** (CI/CD)
+| Area | Technology |
+|---|---|
+| Backend | Node.js, Express |
+| Frontend | HTML, CSS, JavaScript |
+| Data | JSON sample data |
+| Database | Azure Database for PostgreSQL |
+| Testing | Jest, Supertest |
+| Containerization | Docker, Docker Compose |
+| Container registry | Azure Container Registry (ACR) |
+| Infrastructure | Terraform, Microsoft Azure |
+| Configuration management | Ansible |
+| CI/CD | GitHub Actions |
+| Security scanning | npm audit, Trivy, Checkov, Gitleaks |
 
-## Live URL
+## Deployment Architecture
 
-http://4.221.64.130/
+The deployment uses a public jumpbox to administer a private application VM. The Azure Load Balancer provides the public application entry point, while the application connects to a managed PostgreSQL database over the private network.
 
-## Project Structure
+```text
+                 Users
+                   |
+                   v
+          Azure Load Balancer
+             Public IP
+                   |
+                   v
+          Private App VM
+             10.0.2.4
+                   |
+             Docker Compose
+                   |
+             CropTrack App
+               Port 3000
+                   |
+                   v
+       Azure PostgreSQL Flexible
+          Private network
+                   ^
+                   |
+             Private DNS
 
+ GitHub Actions ---> Azure Container Registry
+        |
+        v
+   Ansible deployment
+        |
+        v
+   Public Jumpbox
+        |
+        +---- SSH ProxyJump ----> Private App VM
 ```
-crop-price-tracker/
-├── data/prices.json          # Sample price data
-├── public/                   # Frontend (HTML, CSS, JS)
-├── src/
-│   ├── server.js             # Starts the server
-│   ├── app.js                # Express setup
-│   ├── routes/prices.js      # API endpoints
-│   └── services/priceService.js  # Search, filter, cheapest logic
-├── tests/                    # Unit and API tests
-├── .env.example              # Example environment variables
-└── README.md
-├── Dockerfile
-├── docker-compose.yml
-├── .github/workflows/
-│   ├── ci.yml            # CI pipeline
-│   └── cd.yml            # CD pipeline
-├── terraform/            # Azure infrastructure
-├── ansible/              # Server configuration
-└── CHANGELOG.md          #Document the evolution our your system
-```
+
+### Infrastructure components
+
+- **Azure Virtual Network:** Provides private communication between infrastructure components.
+- **Jumpbox VM:** Provides controlled SSH access to the private application VM.
+- **Private application VM:** Runs the CropTrack Docker container.
+- **Azure Load Balancer:** Exposes the application through a public IP.
+- **Azure Database for PostgreSQL Flexible Server:** Provides managed database services through private networking.
+- **Azure Container Registry:** Stores the Docker application image.
+- **Terraform:** Provisions Azure infrastructure.
+- **Ansible:** Configures the application VM and deploys the container.
+
+## Application URL
+
+The final public URL is the Azure Load Balancer URL generated by Terraform:
+
+`terraform output app_url`
+
+**Deployment verification:** Update this section with the confirmed URL after the post-merge deployment has succeeded.
+
+The earlier application VM URL, `http://4.221.64.130/`, belongs to the previous deployment and should not be treated as confirmation of the new load-balancer deployment.
+
+## API Endpoints
+
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/health` | Application and database health |
+| GET | `/api/prices` | Retrieve crop prices |
+| GET | `/api/prices?crop=maize` | Search by crop |
+| GET | `/api/prices?market=Kigali` | Filter by market |
+| GET | `/api/prices/markets` | List available markets |
+| GET | `/api/prices/cheapest/:crop` | Find the cheapest market for a crop |
+
+The `/health` endpoint returns HTTP 200 when the application can connect to its database. It returns HTTP 503 when the database connection fails.
 
 ## Getting Started
 
 ### Prerequisites
 
-- [Node.js](https://nodejs.org) 18 or newer
+- Node.js 18 or newer
+- npm
 - Git
 
-### Run the app locally
+### Clone the repository
 
 ```bash
 git clone https://github.com/Rwigenzadavy/crop-price-tracker.git
 cd crop-price-tracker
+```
+
+### Install dependencies
+
+```bash
 npm install
+```
+
+### Configure environment variables
+
+Copy the example environment file:
+
+```bash
+cp .env.example .env
+```
+
+Update the environment values when using a PostgreSQL database.
+
+### Run locally
+
+```bash
 npm start
 ```
 
-Open http://localhost:3000 in your browser.
+Open:
 
-Optionally, copy `.env.example` to `.env` to change the port.
+`http://localhost:3000`
 
-### Run the tests
+### Run tests
 
 ```bash
 npm test
 ```
 
-### Getting Started - add a Docker run option:
-```
-docker run -p 3000:3000 rwigenza1davy/croptrack:latest
+## Docker
+
+Build the application image locally:
+
+```bash
+docker build -t croptrack:local .
 ```
 
-## API Endpoints
+Run the container:
 
-| Endpoint | Description |
-|---|---|
-| `GET /health` | Server health check |
-| `GET /api/prices` | All prices |
-| `GET /api/prices?crop=maize` | Search by crop |
-| `GET /api/prices?market=Kigali` | Filter by market |
-| `GET /api/prices/markets` | List of markets |
-| `GET /api/prices/cheapest/:crop` | Cheapest market for a crop |
+```bash
+docker run --rm -p 3000:3000 croptrack:local
+```
+
+For the Azure deployment, GitHub Actions builds and publishes the application image to Azure Container Registry. The deployment uses the Git commit SHA as its image tag.
+
+## Infrastructure Deployment
+
+Infrastructure is managed using Terraform in the `terraform/` directory.
+
+The infrastructure includes:
+
+- Azure resource group and virtual network.
+- Public jumpbox VM.
+- Private application VM and subnet.
+- Network security groups.
+- Azure Load Balancer.
+- Azure PostgreSQL Flexible Server with private DNS.
+- Azure Container Registry.
+
+Terraform documentation: [`terraform/README.md`](terraform/README.md).
+
+**Important:** Terraform state and infrastructure operations are coordinated by the team member maintaining the shared state. Do not independently apply or destroy shared infrastructure.
+
+## Configuration Management
+
+Ansible is located in the `ansible/` directory.
+
+The playbook:
+
+1. Updates the Ubuntu package cache.
+2. Installs Docker Engine and Docker Compose.
+3. Creates the application deployment directory.
+4. Authenticates to Azure Container Registry.
+5. Copies the Docker Compose configuration.
+6. Creates a protected environment file.
+7. Deploys the application container.
+8. Checks application health and database connectivity.
+
+Ansible documentation: [`ansible/README.md`](ansible/README.md).
+
+## CI/CD Pipeline
+
+GitHub Actions automates application validation, security scanning and deployment.
+
+### Continuous Integration
+
+The CI workflow runs on pull requests and pushes.
+
+It includes:
+
+- Application linting and tests.
+- npm dependency security auditing.
+- Trivy container security scanning.
+- Checkov infrastructure-as-code scanning.
+- Gitleaks secret scanning.
+
+### Continuous Deployment
+
+The CD workflow runs after a successful CI workflow on a push to `main`.
+
+It:
+
+1. Checks out the exact commit that passed CI.
+2. Installs Ansible and the required collections.
+3. Configures SSH access through the jumpbox.
+4. Authenticates to Azure Container Registry.
+5. Deploys the SHA-tagged image to the private application VM.
+6. Verifies the application and database connection.
+
+## Security
+
+Security measures include:
+
+- SSH key-based administration.
+- Private application VM without a public IP.
+- PostgreSQL public network access disabled.
+- Network security groups controlling traffic.
+- Protected GitHub Actions secrets.
+- Restricted permissions for application environment files.
+- Automated dependency, container, infrastructure and secret scanning.
+
+See [`SECURITY.md`](SECURITY.md) for vulnerability reporting information.
 
 ## Team Workflow
 
-- `main` is protected: all changes go through a pull request with 1 approval.
-- Review comments must be resolved and branches up to date before merging.
-- Work is planned on our GitHub Projects board with issues, labels and a milestone.
-- Secrets live in `.env`, which is git-ignored.
+- `main` is protected.
+- Changes are submitted through pull requests.
+- At least one team member reviews and approves changes before merging.
+- Review comments and required checks must be addressed.
+- Project tasks are tracked using GitHub Projects.
+- Secrets and local Terraform state must not be committed.
 
-## project board link 
+## Project Resources
 
-https://github.com/users/Rwigenzadavy/projects/2
-
-## participation sheet link 
-
-https://docs.google.com/spreadsheets/d/1bJmq6NWILzwbUYpkZb89TcRqOLvIbtMJfOOpsWrCwaQ/edit?gid=0#gid=0
+- **Repository:** https://github.com/Rwigenzadavy/crop-price-tracker
+- **GitHub Project Board:** https://github.com/users/Rwigenzadavy/projects/2
+- **Participation Sheet:** https://docs.google.com/spreadsheets/d/1bJmq6NWILzwbUYpkZb89TcRqOLvIbtMJfOOpsWrCwaQ/edit?gid=0#gid=0
 
 ## Roadmap
 
-- Admin login and roles (admin adds prices by province)
-- Move storage from JSON to SQLite
+- Add administrator authentication and roles.
+- Allow administrators to manage prices by province.
+- Replace sample JSON data with persistent application data.
+- Expand market coverage.
 
 ## Team
 
-| Name | GitHub | Role |
+| Name | GitHub | Contribution |
 |---|---|---|
-| Rwigenza Davy | @Rwigenzadavy | Team lead and repo setup, CI security scans, CD pipeline |
-| Jurie Isaro | @Isa-julie | Tests and Documentation, Terraform infrastructure |
-| Kethia Karangwa | @kkarangwa | Frontend, SECURITY.md |
-| Ivan Mucyo | @keen-ivan | backend and Services, Ansible deployment  |
+| Rwigenza Davy | @Rwigenzadavy | Team lead, repository setup, CI security scans and CD pipeline |
+| Julie Isaro | @Isa-julie | Testing, documentation and Terraform infrastructure |
+| Kethia Karangwa | @kkarangwa | Frontend and SECURITY.md |
+| Ivan Mucyo | @keen-ivan | Backend services and Ansible deployment |
 
 ## License
 
-MIT. See [LICENSE](LICENSE).
+MIT. See [`LICENSE`](LICENSE).
