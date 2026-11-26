@@ -119,8 +119,8 @@ resource "azurerm_private_dns_zone_virtual_network_link" "db" {
 # ==========================================
 # 5. POSTGRESQL FLEXIBLE SERVER
 # ==========================================
-#checkov:skip=CKV_AZURE_136:Geo-redundant backups add cost and are not required for this single-region coursework
 resource "azurerm_postgresql_flexible_server" "db" {
+  #checkov:skip=CKV_AZURE_136:Geo-redundant backups add cost and are not required for this single-region coursework deployment; standard backups remain enabled.
   name                          = "psql-${var.name_prefix}-${random_string.suffix.result}"
   resource_group_name           = var.resource_group_name
   location                      = var.location
