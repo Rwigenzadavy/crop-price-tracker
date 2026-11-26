@@ -83,6 +83,7 @@ resource "azurerm_linux_virtual_machine" "app" {
   size                            = var.vm_size
   admin_username                  = var.admin_username
   disable_password_authentication = true
+  allow_extension_operations      = false
   network_interface_ids           = [azurerm_network_interface.app.id]
 
   dynamic "admin_ssh_key" {
