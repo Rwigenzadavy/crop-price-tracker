@@ -80,6 +80,7 @@ resource "azurerm_public_ip" "pip" {
 }
 
 resource "azurerm_network_interface" "nic" {
+  #checkov:skip=CKV_AZURE_119:Public IP is intentional because this VM serves as the SSH jumpbox to the private application VM
   name                = "nic-${local.name}"
   location            = azurerm_resource_group.rg.location
   resource_group_name = azurerm_resource_group.rg.name

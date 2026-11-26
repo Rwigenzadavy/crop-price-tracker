@@ -1,3 +1,4 @@
+
 terraform {
   required_providers {
     azurerm = {
@@ -21,6 +22,10 @@ resource "random_password" "admin" {
   special = false
 }
 
+# ==========================================
+# 1. DATABASE SUBNET
+# ==========================================
+
 resource "azurerm_subnet" "db" {
   name                 = "snet-${var.name_prefix}-db"
   resource_group_name  = var.resource_group_name
@@ -29,12 +34,75 @@ resource "azurerm_subnet" "db" {
 
   delegation {
     name = "postgres-delegation"
+
     service_delegation {
       name    = "Microsoft.DBforPostgreSQL/flexibleServers"
       actions = ["Microsoft.Network/virtualNetworks/subnets/join/action"]
     }
   }
 }
+
+# ==========================================
+# 2. DATABASE NETWORK SECURITY GROUP
+# ==========================================
+
+resource "azurerm_network_security_group" "db" {
+  name                = "nsg-${var.name_prefix}-db"
+  location            = var.location
+  resource_group_name = var.resource_group_name
+
+  # Priority 100: Allow PostgreSQL from application subnet
+  security_rule {
+    name                       = "allow-postgres-from-app"
+    priority                   = 100
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "5432"
+    source_address_prefix      = "10.0.2.0/24"
+    destination_address_prefix = "*"
+  }
+
+  # Priority 110: Allow PostgreSQL internal subnet traffic
+  security_rule {
+    name                       = "allow-postgres-internal"
+    priority                   = 110
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "5432"
+    source_address_prefix      = var.db_subnet_cidr
+    destination_address_prefix = "*"
+  }
+
+  # Priority 200: Deny other Virtual Network inbound traffic
+  security_rule {
+    name                       = "deny-other-vnet-inbound"
+    priority                   = 200
+    direction                  = "Inbound"
+    access                     = "Deny"
+    protocol                   = "*"
+    source_port_range          = "*"
+    destination_port_range     = "*"
+    source_address_prefix      = "VirtualNetwork"
+    destination_address_prefix = "*"
+  }
+}
+
+# ==========================================
+# 3. ASSOCIATE NSG WITH DATABASE SUBNET
+# ==========================================
+
+resource "azurerm_subnet_network_security_group_association" "db" {
+  subnet_id                 = azurerm_subnet.db.id
+  network_security_group_id = azurerm_network_security_group.db.id
+}
+
+# ==========================================
+# 4. PRIVATE DNS ZONE
+# ==========================================
 
 resource "azurerm_private_dns_zone" "db" {
   name                = "${var.name_prefix}.private.postgres.database.azure.com"
@@ -47,6 +115,10 @@ resource "azurerm_private_dns_zone_virtual_network_link" "db" {
   resource_group_name   = var.resource_group_name
   virtual_network_id    = var.vnet_id
 }
+
+# ==========================================
+# 5. POSTGRESQL FLEXIBLE SERVER
+# ==========================================
 
 resource "azurerm_postgresql_flexible_server" "db" {
   name                          = "psql-${var.name_prefix}-${random_string.suffix.result}"
@@ -62,12 +134,19 @@ resource "azurerm_postgresql_flexible_server" "db" {
   storage_mb                    = var.storage_mb
   backup_retention_days         = 7
 
-  depends_on = [azurerm_private_dns_zone_virtual_network_link.db]
+  depends_on = [
+    azurerm_private_dns_zone_virtual_network_link.db,
+    azurerm_subnet_network_security_group_association.db
+  ]
 
   lifecycle {
     ignore_changes = [zone]
   }
 }
+
+# ==========================================
+# 6. APPLICATION DATABASE
+# ==========================================
 
 resource "azurerm_postgresql_flexible_server_database" "app" {
   name      = var.db_name
