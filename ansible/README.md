@@ -1,37 +1,61 @@
-
-# Ansible Configuration Management - CropTrack
+# Ansible - CropTrack Deployment
 
 ## Overview
 
-This directory contains Ansible automation used to configure
-the Azure Ubuntu virtual machine and deploy the CropTrack
-application.
+Ansible automates the configuration of the private Azure application VM and deployment of CropTrack.
 
-The application is deployed using the published Docker image:
+The deployment uses a Docker image stored in Azure Container Registry (ACR).
 
-rwigenza1davy/croptrack:latest
+The application VM is privately addressed and is accessed through the public jumpbox using SSH ProxyJump.
 
-The application runs inside Docker on port 3000 and is
-exposed publicly through port 80.
+## Deployment Architecture
+
+```text
+GitHub Actions
+      |
+      v
+Azure Container Registry
+      |
+      v
+Ansible deployment
+      |
+      v
+Public jumpbox
+      |
+      | SSH ProxyJump
+      v
+Private application VM
+      |
+      v
+Docker Compose
+      |
+      v
+CropTrack container
+      |
+      v
+PostgreSQL Flexible Server
+```
 
 ## Directory Structure
 
-- site.yml: Main Ansible deployment playbook.
-- inventory.ini: Azure VM inventory.
-- ansible.cfg: Ansible configuration.
-- group_vars/webservers.yml: Application and environment variables.
-- README.md: Documentation.
+- `site.yml`: Main deployment playbook.
+- `inventory.ini`: Ansible inventory.
+- `ansible.cfg`: Ansible configuration.
+- `group_vars/webservers.yml`: Application and database connection settings.
+- `requirements.yml`: Pinned Ansible collections.
 
 ## Prerequisites
 
 - Ansible installed on the control machine.
-- An Azure Ubuntu virtual machine.
-- SSH access to the Azure VM.
-- A valid SSH private key.
-- Docker image available in Docker Hub.
-- Python Docker SDK installed on the remote server.
+- SSH access to the jumpbox.
+- SSH configuration allowing access to the private VM through the jumpbox.
+- Azure Container Registry credentials.
+- PostgreSQL database credentials.
+- Required Ansible collections.
 
 ## Install Ansible
+
+On Ubuntu:
 
 ```bash
 sudo apt update
@@ -41,96 +65,97 @@ sudo apt install ansible -y
 ## Install Required Collections
 
 ```bash
-ansible-galaxy collection install community.docker community.general ansible.posix
+ansible-galaxy collection install -r ansible/requirements.yml
 ```
 
-## Configure Inventory
+The project pins the following collection versions:
 
-Update inventory.ini with:
+- `community.docker` 4.8.1
+- `community.general` 11.4.1
+- `ansible.posix` 2.1.0
 
-- Azure VM public IP address.
-- SSH username (azureuser).
-- SSH private key location.
+## Inventory and SSH Access
 
-## Configure Application Variables
+The Ansible inventory identifies the private application VM.
 
-Edit group_vars/webservers.yml.
+SSH access is routed through the jumpbox using ProxyJump. The CD workflow prepares the SSH configuration and known-hosts information using GitHub Actions secrets.
 
-The configuration defines:
+The private VM should not be accessed through a public IP.
 
-- Docker image.
-- Public application port.
-- SSH port.
-- Authorized teammate public SSH keys.
+## Application Configuration
 
-## Test Server Connectivity
+The deployment uses the following settings:
 
-From the project root:
+| Variable | Purpose |
+|---|---|
+| `acr_login_server` | Azure Container Registry hostname |
+| `image_repository` | Application image repository |
+| `image_tag` | Git commit SHA used for deployment |
+| `db_host` | PostgreSQL server hostname |
+| `db_port` | PostgreSQL port |
+| `db_name` | Application database |
+| `db_user` | Database username |
+| `db_password` | Database password |
 
-```bash
-ansible webservers -i ansible/inventory.ini -m ping
+Credentials are passed securely through GitHub Actions secrets and are not stored in the repository.
+
+## Deployment Process
+
+The Ansible playbook performs the following tasks:
+
+1. Updates the Ubuntu package cache.
+2. Installs required dependencies.
+3. Installs Docker Engine and Docker Compose.
+4. Starts and enables the Docker service.
+5. Creates `/opt/croptrack`.
+6. Authenticates to Azure Container Registry.
+7. Copies the Docker Compose configuration.
+8. Creates a protected environment file with database settings.
+9. Deploys the application using Docker Compose.
+10. Checks application health and database connectivity.
+
+## Continuous Deployment
+
+The GitHub Actions CD workflow starts after a successful CI workflow on a push to `main`.
+
+It checks out the exact commit that passed CI, prepares SSH access, installs Ansible and the required collections, and runs the deployment playbook.
+
+The application image is tagged using the Git commit SHA.
+
+## Deployment Verification
+
+The playbook checks the local application health endpoint:
+
+```text
+http://127.0.0.1:3000/health
 ```
 
-## Run the Playbook
+A successful response must indicate:
 
-```bash
-ansible-playbook -i ansible/inventory.ini ansible/site.yml
+```json
+{
+  "status": "ok",
+  "database": "connected"
+}
 ```
 
-## Verify Deployment
+The playbook requires HTTP 200 and a connected database before reporting a successful deployment.
 
-Check running Docker containers:
+The public application endpoint is exposed through the Azure Load Balancer.
 
-```bash
-ansible webservers -i ansible/inventory.ini -a "docker ps"
-```
+## Security
 
-Check application health:
+- SSH key-based administration.
+- Private application VM without a public IP.
+- SSH access through the jumpbox.
+- ACR authentication using protected credentials.
+- Database credentials stored in a root-owned environment file with restricted permissions.
+- Ansible tasks handling credentials use `no_log` where appropriate.
+- PostgreSQL public network access is disabled.
 
-```bash
-curl http://102.37.96.80/health
-```
+## Important Notes
 
-Check SSH service:
-
-```bash
-ansible webservers -i ansible/inventory.ini -a "sudo systemctl status ssh"
-```
-
-## Security Configuration
-
-The playbook implements:
-
-1. Docker-based application deployment.
-2. UFW firewall configuration.
-3. SSH root login restriction.
-4. SSH authentication hardening.
-5. Authorized SSH public keys for teammates.
-6. Automatic Docker container restart.
-
-## Network Configuration
-
-The Azure Network Security Group must allow:
-
-- TCP port 22 for SSH administration.
-- TCP port 80 for public application access.
-
-The Docker container listens internally on port 3000.
-Docker maps host port 80 to container port 3000.
-
-Note: Docker-published ports can bypass ordinary UFW
-filtering. Azure NSG rules must therefore be used as
-the primary cloud-level network access control.
-
-## Deployment Architecture
-
-Internet -> Azure NSG -> Ubuntu VM -> Docker -> CropTrack
-
-## Application Image
-
-Docker Hub:
-
-rwigenza1davy/croptrack:latest
-
-The playbook pulls the published image rather than
-rebuilding the application from source.
+- Do not commit passwords, private keys or GitHub secrets.
+- Do not replace the private VM architecture with a publicly exposed application VM.
+- Infrastructure operations must be coordinated with the team member maintaining Terraform state.
+- A successful Ansible deployment includes both application and database health verification.
